@@ -1,13 +1,13 @@
 Todo List:
 
 -----------------------TODO----------------------------------
+1. Final Image.
+
 ------------Yossi-----------------------
-1.4. Change Animation speed.
-1.5. When playing animation in program, make sure to change to Wireframe first (than return it to what it was before).
+1. Maybe change inverse normals to affect only the selected model.
 
 ------------BEN-----------------------
-1. Texture 2D.
-2. Bump Mapping.
+
 
 -----------------------DONE--------------------------------
 1.1 Record Animation.
@@ -16,3 +16,5 @@ Todo List:
 1.6. Bezier.
 2. Spot Light.
 3. Fog.
+4. Anti-Aliasing.
+5. Multi Model support.
