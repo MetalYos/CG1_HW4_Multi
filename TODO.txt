@@ -1,0 +1,18 @@
+Todo List:
+
+-----------------------TODO----------------------------------
+------------Yossi-----------------------
+1.4. Change Animation speed.
+1.5. When playing animation in program, make sure to change to Wireframe first (than return it to what it was before).
+
+------------BEN-----------------------
+1. Texture 2D.
+2. Bump Mapping.
+
+-----------------------DONE--------------------------------
+1.1 Record Animation.
+1.2 Play Animation in Wireframe (troublesome when rendering takes too long).
+1.3 Save to a sequence of images.
+1.6. Bezier.
+2. Spot Light.
+3. Fog.
