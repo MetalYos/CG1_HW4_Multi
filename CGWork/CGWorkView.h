@@ -108,7 +108,6 @@ private:
 	
 	// Fine tuning parameters
 	double normalSizeFactor;
-	double normalSign;
 	bool showGeos;
 	bool aroundEye;
 	Vec4 m_sensitivity;

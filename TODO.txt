@@ -4,7 +4,7 @@ Todo List:
 1. Final Image.
 
 ------------Yossi-----------------------
-1. Maybe change inverse normals to affect only the selected model.
+
 
 ------------BEN-----------------------
 
@@ -18,3 +18,4 @@ Todo List:
 3. Fog.
 4. Anti-Aliasing.
 5. Multi Model support.
+6. Maybe change inverse normals to affect only the selected model.

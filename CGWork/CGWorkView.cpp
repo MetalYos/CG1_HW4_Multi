@@ -195,7 +195,6 @@ CCGWorkView::CCGWorkView()
 	showSil = false;
 	silThickness = 3;
 	silColor = AL_YELLO_CREF;
-	normalSign = 1.0;
 	saveToFile = false;
 	
 	// Animation parameters
@@ -1054,7 +1053,7 @@ bool CCGWorkView::IsBackFace(const Poly* p, const Mat4& objToWorld,
 	Vec4 normal = Scene::GetInstance().GetCalcNormalState() ?
 		CalculatePolyNormal(p, objToWorld, camTransform, viewTransform) :
 		p->Normal * objToWorld * camTransform * viewTransform;
-	normal *= normalSign;
+	normal *= Scene::GetInstance().GetSelectedModel()->NormalSign;
 	normal = Vec4::Normalize3(normal);
 
 	// Transform poly center to View Space
@@ -1351,11 +1350,11 @@ void CCGWorkView::OnPaint()
 						Vec4 normal1VS = Scene::GetInstance().GetCalcNormalState() ?
 							CalculateVertexNormal(p->Vertices[i], objToWorld, camTransform, viewTransform) :
 							p->Vertices[i]->Normal * objToWorld * camTransform * viewTransform;
-						normal1VS *= normalSign;
+						normal1VS *= model->NormalSign;
 						Vec4 normal2VS = Scene::GetInstance().GetCalcNormalState() ?
 							CalculateVertexNormal(p->Vertices[(i + 1) % p->Vertices.size()], objToWorld, camTransform, viewTransform) :
 							p->Vertices[(i + 1) % p->Vertices.size()]->Normal * objToWorld * camTransform * viewTransform;
-						normal2VS *= normalSign;
+						normal2VS *= model->NormalSign;
 
 						// Save parameters in DVertex
 						dVertex1.Pixel = pix1;
@@ -1397,7 +1396,7 @@ void CCGWorkView::OnPaint()
 					Vec4 normal = Scene::GetInstance().GetCalcNormalState() ?
 						CalculatePolyNormal(p, objToWorld, camTransform, viewTransform) :
 						p->Normal * objToWorld * camTransform * viewTransform;
-					normal *= normalSign; // Poly normal in View Space coordinates
+					normal *= model->NormalSign; // Poly normal in View Space coordinates
 
 					// Draw poly in wireframe mode or fill it, according to user selection
 					if (currentPolySelection == WIREFRAME && !saveToFile)
@@ -2411,7 +2410,11 @@ void CCGWorkView::OnButtonSil()
 
 void CCGWorkView::OnButtonInverseN()
 {
-	normalSign = -1.0 * normalSign;
+	if (Scene::GetInstance().GetModels().size() == 0)
+		return;
+
+	Model* model = Scene::GetInstance().GetSelectedModel();
+	model->NormalSign = -1.0 * model->NormalSign;
 	Invalidate();
 }
 

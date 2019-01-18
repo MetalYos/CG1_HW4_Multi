@@ -22,8 +22,11 @@ private:
 	Vec4 maxCoord;
 
 public:
+	int NormalSign;
+
+public:
 	Model() : material(new Material()), color(AL_WHITE), normalColor(AL_RED),
-		anim(new Animation) { }
+		anim(new Animation), NormalSign(1) { }
 	~Model();
 
 	void AddGeometry(Geometry* geo);
