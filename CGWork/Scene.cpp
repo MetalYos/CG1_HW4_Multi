@@ -91,26 +91,27 @@ Model * Scene::GetSelectedModel()
 	return models[selectedModelIndex];
 }
 
-Model * Scene::SelectNextModel()
+void Scene::SelectNextModel()
 {
-	if (selectedModelIndex < 0)
-		return nullptr;
+	if (models.size() == 0)
+		return;
 
 	selectedModelIndex++;
 	selectedModelIndex = (selectedModelIndex >= models.size()) ? 0 : selectedModelIndex;
-
-	return GetSelectedModel();
 }
 
-Model * Scene::SelectPreviousModel()
+void Scene::SelectPreviousModel()
 {
-	if (selectedModelIndex < 0)
-		return nullptr;
+	if (models.size() == 0)
+		return;
 
 	selectedModelIndex--;
 	selectedModelIndex = (selectedModelIndex < 0) ? (models.size() - 1) : selectedModelIndex;
+}
 
-	return GetSelectedModel();
+void Scene::UnselectAllModels()
+{
+	selectedModelIndex = -1;
 }
 
 void Scene::DeleteModels()

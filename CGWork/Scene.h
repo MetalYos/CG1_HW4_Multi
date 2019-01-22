@@ -55,8 +55,9 @@ public:
 	int GetFineNess() const;
 
 	Model* GetSelectedModel();
-	Model* SelectNextModel();
-	Model* SelectPreviousModel();
+	void SelectNextModel();
+	void SelectPreviousModel();
+	void UnselectAllModels();
 	void DeleteModels();
 
 	void ClearScene();

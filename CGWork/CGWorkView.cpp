@@ -333,15 +333,14 @@ public:
 	}
 };
 
-void CCGWorkView::ScanConvert(std::vector<Edge> poly, COLORREF color, Vec4 polyCenter, Vec4 polyNormal)
+void CCGWorkView::ScanConvert(std::vector<Edge> poly, Material* material, COLORREF color, Vec4 polyCenter, Vec4 polyNormal)
 {
 	assert(poly.size() > 2);
 	COLORREF objectColor = color;
-	Material* m = Scene::GetInstance().GetModels().back()->GetMaterial();
 	if (m_nLightShading == ID_LIGHT_SHADING_FLAT)
 	{
 		// Calculate color
-		Vec4 c = CalculateShading(m_lights, m, polyCenter, polyNormal, objectColor);
+		Vec4 c = CalculateShading(m_lights, material, polyCenter, polyNormal, objectColor);
 		color = RGB((int)(c[0] * 255.0), (int)(c[1] * 255.0), (int)(c[2] * 255.0));
 
 		if (fog.IsEnabled)
@@ -508,7 +507,7 @@ void CCGWorkView::ScanConvert(std::vector<Edge> poly, COLORREF color, Vec4 polyC
 				{
 					Vec4 normal = n1 - (n1 - n0) * ((double)(x1 - x) / (double)(x1 - x0));
 					// Calculate color
-					Vec4 c = CalculateShading(m_lights, m, pos, normal, objectColor);
+					Vec4 c = CalculateShading(m_lights, material, pos, normal, objectColor);
 					color = RGB((int)(c[0] * 255.0), (int)(c[1] * 255.0), (int)(c[2] * 255.0));
 				}
 				// Compare z Pos to zBuffer, if z Pos > zBuffer,
@@ -807,12 +806,12 @@ void CCGWorkView::DrawBackground()
 	}
 }
 
-void CCGWorkView::DrawSilhouetteEdges(Geometry* geo, const Mat4& objToWorld, const Mat4& camTransform,
+void CCGWorkView::DrawSilhouetteEdges(Model* model, Geometry* geo, const Mat4& objToWorld, const Mat4& camTransform,
 	const Mat4& viewTransform, const Mat4& projection, const Mat4& toView, COLORREF color)
 {
 	for (PolyEdge* e : geo->Edges)
 	{
-		if (IsSilhouetteEdge(e, objToWorld, camTransform, viewTransform, projection))
+		if (IsSilhouetteEdge(model, e, objToWorld, camTransform, viewTransform, projection))
 		{
 			// Transform from object space to projected space
 			Vec4 p1 = e->A->Pos * objToWorld * camTransform * viewTransform * projection;
@@ -1047,13 +1046,13 @@ Vec4 CCGWorkView::CalculateShading(LightParams* lights, Material* material, Vec4
 	return Vec4(min(sum[0], 1.0), min(sum[1], 1.0), min(sum[2], 1.0));
 }
 
-bool CCGWorkView::IsBackFace(const Poly* p, const Mat4& objToWorld, 
+bool CCGWorkView::IsBackFace(Model* model, const Poly* p, const Mat4& objToWorld,
 	const Mat4& camTransform, const Mat4& viewTransform, const Mat4& projection)
 {
 	Vec4 normal = Scene::GetInstance().GetCalcNormalState() ?
 		CalculatePolyNormal(p, objToWorld, camTransform, viewTransform) :
 		p->Normal * objToWorld * camTransform * viewTransform;
-	normal *= Scene::GetInstance().GetSelectedModel()->NormalSign;
+	normal *= model->NormalSign;
 	normal = Vec4::Normalize3(normal);
 
 	// Transform poly center to View Space
@@ -1070,14 +1069,14 @@ bool CCGWorkView::IsBackFace(const Poly* p, const Mat4& objToWorld,
 	return normal[2] < 0;
 }
 
-bool CCGWorkView::IsSilhouetteEdge(const PolyEdge* e, const Mat4& objToWorld, const Mat4& camTransform, 
+bool CCGWorkView::IsSilhouetteEdge(Model* model, const PolyEdge* e, const Mat4& objToWorld, const Mat4& camTransform, 
 	const Mat4& viewTransform, const Mat4& projection)
 {
 	if (e->Polys.size() != 2)
 		return false;
 
-	bool isPoly1BF = IsBackFace(e->Polys[0], objToWorld, camTransform, viewTransform, projection);
-	bool isPoly2BF = IsBackFace(e->Polys[1], objToWorld, camTransform, viewTransform, projection);
+	bool isPoly1BF = IsBackFace(model, e->Polys[0], objToWorld, camTransform, viewTransform, projection);
+	bool isPoly2BF = IsBackFace(model, e->Polys[1], objToWorld, camTransform, viewTransform, projection);
 	return (isPoly1BF ^ isPoly2BF);
 }
 
@@ -1289,6 +1288,7 @@ void CCGWorkView::OnPaint()
 				Vec4ToColor(model->GetColor());
 			COLORREF normalColor = isCColorDialogOpen ? m_colorDialog.NormalColor :
 				Vec4ToColor(model->GetNormalColor());
+			Material* material = model->GetMaterial();
 
 			// Replace Model and Cam transform matricies if we are playing an animation
 			if (isPlaying)
@@ -1315,7 +1315,7 @@ void CCGWorkView::OnPaint()
 					std::vector<Vec4Line> polyEdges;
 
 					// Check Backface culling, and draw only if it is front facing
-					if (isBFCulling && IsBackFace(p, objToWorld, camTransform, viewTransform, projection))
+					if (isBFCulling && IsBackFace(model, p, objToWorld, camTransform, viewTransform, projection))
 						continue;
 
 					for (unsigned int i = 0; i < p->Vertices.size(); i++)
@@ -1342,6 +1342,10 @@ void CCGWorkView::OnPaint()
 						// Contruct poly for mouse selection test
 						polyEdges.push_back({ pix1Vec, pix2Vec });
 
+						// Set model to be selected color if the model is selected
+						if (model == Scene::GetInstance().GetSelectedModel())
+							color = AL_YELLO_CREF;
+
 						// Initialize vertex for drawing
 						DVertex dVertex1, dVertex2;
 
@@ -1362,14 +1366,14 @@ void CCGWorkView::OnPaint()
 						dVertex1.Z = clipped1[2];
 						dVertex1.NormalVS = normal1VS;
 						// Calculate color
-						dVertex1.Color = CalculateShading(m_lights, model->GetMaterial(), dVertex1.PosVS, dVertex1.NormalVS, color) * 255.0;
+						dVertex1.Color = CalculateShading(m_lights, material, dVertex1.PosVS, dVertex1.NormalVS, color) * 255.0;
 
 						dVertex2.Pixel = pix2;
 						dVertex2.PosVS = pos2 * objToWorld * camTransform * viewTransform;
 						dVertex2.Z = clipped2[2];
 						dVertex2.NormalVS = normal2VS;
 						// Calculate color
-						dVertex2.Color = CalculateShading(m_lights, model->GetMaterial(), dVertex2.PosVS, dVertex2.NormalVS, color) * 255.0;
+						dVertex2.Color = CalculateShading(m_lights, material, dVertex2.PosVS, dVertex2.NormalVS, color) * 255.0;
 
 						// Construct poly for drawing
 						if (m_colorDialog.IsDiscoMode)
@@ -1402,7 +1406,7 @@ void CCGWorkView::OnPaint()
 					if (currentPolySelection == WIREFRAME && !saveToFile)
 						DrawPoly(poly);
 					else if (currentPolySelection == SOLID_SCREEN || saveToFile)
-						ScanConvert(poly, color, polyCenter, normal);
+						ScanConvert(poly, material, color, polyCenter, normal);
 
 					// Draw poly normal if needed
 					if (Scene::GetInstance().ArePolyNormalsOn())
@@ -1421,7 +1425,7 @@ void CCGWorkView::OnPaint()
 				// Draw Silhouette Edges if needed
 				if (showSil)
 				{
-					DrawSilhouetteEdges(geo, objToWorld, camTransform, viewTransform,
+					DrawSilhouetteEdges(model, geo, objToWorld, camTransform, viewTransform,
 						projection, toView, silColor);
 				}
 			}
@@ -1978,6 +1982,9 @@ void CCGWorkView::OnLButtonUp(UINT nFlags, CPoint point)
 {
 	if (isRecording)
 	{
+		if (Scene::GetInstance().GetSelectedModel() == nullptr)
+			return;
+
 		Animation* anim = Scene::GetInstance().GetSelectedModel()->GetAnimation();
 		clock_t ticksDiff = clock() - m_MouseDownTicks;
 		double timeDiff = (double)ticksDiff / CLOCKS_PER_SEC;
@@ -2109,9 +2116,9 @@ void CCGWorkView::OnButtonColors()
 	isCColorDialogOpen = true;
 	if (m_colorDialog.DoModal() == IDOK)
 	{
-		if (Scene::GetInstance().GetModels().size() > 0)
+		if (Scene::GetInstance().GetSelectedModel() != nullptr)
 		{
-			Model* model = Scene::GetInstance().GetModels().back();
+			Model* model = Scene::GetInstance().GetSelectedModel();
 			COLORREF oldModelColor = RGB((BYTE)model->GetColor()[0], (BYTE)model->GetColor()[1],
 				(BYTE)model->GetColor()[2]);
 			Vec4 normColor(GetRValue(m_colorDialog.NormalColor), GetGValue(m_colorDialog.NormalColor),
@@ -2154,12 +2161,12 @@ void CCGWorkView::OnOptionsTessellationtolerance()
 		if (Scene::GetInstance().GetModels().size() > 0)
 		{
 			// Delete previous models
-			Scene::GetInstance().GetInstance().GetModels().back()->DeleteGeometries();
+			Scene::GetInstance().GetSelectedModel()->DeleteGeometries();
 			// Load model from file
 			PngWrapper p;
 			CGSkelProcessIritDataFiles(m_strItdFileName, 1);
 			// Build Building Box
-			Scene::GetInstance().GetModels().back()->BuildBoundingBox();
+			Scene::GetInstance().GetSelectedModel()->BuildBoundingBox();
 
 			Invalidate();
 		}
@@ -2277,7 +2284,9 @@ void CCGWorkView::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 	if (nChar == VK_LEFT)
 		Scene::GetInstance().SelectPreviousModel();
 	if (nChar == VK_RIGHT)
-		Scene::GetInstance().SelectPreviousModel();
+		Scene::GetInstance().SelectNextModel();
+	if (nChar == VK_SPACE)
+		Scene::GetInstance().UnselectAllModels();
 
 	CView::OnKeyDown(nChar, nRepCnt, nFlags);
 	Invalidate();
@@ -2380,7 +2389,7 @@ void CCGWorkView::OnLightSetmaterial()
 {
 	if (m_materialDialog.DoModal() == IDOK)
 	{
-		if (Scene::GetInstance().GetModels().size() > 0)
+		if (Scene::GetInstance().GetSelectedModel() != nullptr)
 		{
 			Material* material = Scene::GetInstance().GetSelectedModel()->GetMaterial();
 			material->Ka = m_materialDialog.GetAmbientCoeffs();
@@ -2410,11 +2419,11 @@ void CCGWorkView::OnButtonSil()
 
 void CCGWorkView::OnButtonInverseN()
 {
-	if (Scene::GetInstance().GetModels().size() == 0)
+	if (Scene::GetInstance().GetSelectedModel() == nullptr)
 		return;
 
 	Model* model = Scene::GetInstance().GetSelectedModel();
-	model->NormalSign = -1.0 * model->NormalSign;
+	model->NormalSign = -1 * model->NormalSign;
 	Invalidate();
 }
 

@@ -169,7 +169,7 @@ private:
 	void DrawPolyNormal(const Vec4& polyCenterVS, const Vec4& normalVS, const Mat4& projection,
 		const Mat4& toView, COLORREF color);
 	void DrawBackground();
-	void DrawSilhouetteEdges(Geometry* geo, const Mat4& objToWorld, const Mat4& camTransform,
+	void DrawSilhouetteEdges(Model* model, Geometry* geo, const Mat4& objToWorld, const Mat4& camTransform,
 		const Mat4& viewTransform, const Mat4& projection, const Mat4& toView, COLORREF color);
 	void SetPixelBuffer(int x, int y, COLORREF color);
 	//Dialogs
@@ -191,7 +191,7 @@ public:
 	virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
 	void DrawLine(COLORREF color, CPoint a, CPoint b, int thickness = 0);
 	void DrawPoly(std::vector<Edge>);
-	void ScanConvert(std::vector<Edge> poly, COLORREF color, Vec4 polyCenter = Vec4(0.0), Vec4 polyNormal = Vec4(0.0));
+	void ScanConvert(std::vector<Edge> poly, Material* material, COLORREF color, Vec4 polyCenter = Vec4(0.0), Vec4 polyNormal = Vec4(0.0));
 	protected:
 	//}}AFX_VIRTUAL
 
@@ -208,8 +208,8 @@ protected:
 	BOOL SetupViewingFrustum(void);
 	BOOL SetupViewingOrthoConstAspect(void);
 	Vec4 CalculateShading(LightParams* lights, Material* material, Vec4 pos, Vec4 normal, COLORREF color);
-	bool IsBackFace(const Poly* p, const Mat4& objToWorld, const Mat4& camTransform, const Mat4& viewTransform, const Mat4& projection);
-	bool IsSilhouetteEdge(const PolyEdge* e, const Mat4& objToWorld, const Mat4& camTransform, const Mat4& viewTransform, const Mat4& projection);
+	bool IsBackFace(Model* model, const Poly* p, const Mat4& objToWorld, const Mat4& camTransform, const Mat4& viewTransform, const Mat4& projection);
+	bool IsSilhouetteEdge(Model* model, const PolyEdge* e, const Mat4& objToWorld, const Mat4& camTransform, const Mat4& viewTransform, const Mat4& projection);
 	Vec4 CalculatePolyNormal(const Poly* p, const Mat4& objToWorld, const Mat4& camTransform, const Mat4& viewTransform);
 	Vec4 CalculateVertexNormal(const Vertex* v, const Mat4& objToWorld, const Mat4& camTransform, const Mat4& viewTransform);
 	COLORREF GetColorWithFog(const Vec4& posVS, COLORREF objColor);

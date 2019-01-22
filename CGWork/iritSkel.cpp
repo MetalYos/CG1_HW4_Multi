@@ -252,8 +252,8 @@ bool CGSkelStoreData(IPObjectStruct *PObj)
 	geo->BuildBoundingBox();
 	
 	// Add model to scene
-	Scene::GetInstance().GetModels().back()->AddGeometry(geo);
-	Scene::GetInstance().GetModels().back()->SetColor(color);
+	Scene::GetInstance().GetSelectedModel()->AddGeometry(geo);
+	Scene::GetInstance().GetSelectedModel()->SetColor(color);
 
 	return true;
 }
