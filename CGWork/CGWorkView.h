@@ -151,6 +151,10 @@ private:
 	BUFFER m_FrameBuffer;
 	AntiAliasing m_antiAliasing;
 
+	// Camera movement parameters
+	CPoint m_MouseMiddlePrevPos;
+	bool m_IsMouseMiddleDown;
+
 	// Quick hack
 	std::vector< std::vector<Edge> > selectedPolys;
 
@@ -325,6 +329,9 @@ public:
 	afx_msg void OnFogeffectPortal();
 	afx_msg void OnUpdateFogeffectPortal(CCmdUI *pCmdUI);
 	afx_msg void OnFileClearall();
+	afx_msg void OnMButtonDown(UINT nFlags, CPoint point);
+	afx_msg void OnMButtonUp(UINT nFlags, CPoint point);
+	afx_msg BOOL OnMouseWheel(UINT nFlags, short zDelta, CPoint pt);
 };
 
 #ifndef _DEBUG  // debug version in CGWorkView.cpp

@@ -9,38 +9,63 @@ Camera::~Camera()
 {
 }
 
-/*
-void Camera::Translate(Mat4& T)
-{
-	cTransform = cTransform * T;
-}
-
-void Camera::Scale(Mat4& S, bool aroundEye)
-{
-	if (aroundEye)
-	{
-		Mat4 T = Mat4::Translate(camParams.EyeCam) * S * Mat4::Translate(-camParams.EyeCam);
-		cTransform = cTransform * T;
-	}
-	else
-		cTransform = cTransform * S;
-}
-
-void Camera::Rotate(Mat4& R, bool aroundEye)
-{
-	if (aroundEye)
-	{
-		Mat4 T = Mat4::Translate(camParams.EyeCam) * R * Mat4::Translate(-camParams.EyeCam);
-		cTransform = cTransform * T;
-	}
-	else
-		cTransform = cTransform * R;
-}
-*/
-
 Mat4 Camera::GetTranform() const
 {
 	return cTransform;
+}
+
+void Camera::OrbitCamera(double yawOffset, double pitchOffset)
+{
+	camParams.Yaw += yawOffset;
+	camParams.Pitch += pitchOffset;
+
+	if (camParams.Pitch > 89.0)
+		camParams.Pitch = 89.0;
+	if (camParams.Pitch < -89.0)
+		camParams.Pitch = -89.0;
+
+	Vec4 front;
+	front[0] = cos(ToRadians(camParams.Yaw)) * cos(ToRadians(camParams.Pitch));
+	front[1] = sin(ToRadians(camParams.Pitch));
+	front[2] = sin(ToRadians(camParams.Yaw)) * cos(ToRadians(camParams.Pitch));
+	front[3] = 0.0;
+	LookAt(camParams.Eye, -front + camParams.Eye, camParams.WorldUp);
+}
+
+void Camera::ZoomCamera(double zoomOffset)
+{
+	double fov = perspectiveParams.FOV;
+	fov -= zoomOffset;
+
+	if (fov < 1.0) fov = 1.0;
+	if (fov > 90.0) fov = 90.0;
+
+	if (isPerspective)
+	{
+		SetPerspective2(fov, perspectiveParams.AspectRatio, perspectiveParams.Near, perspectiveParams.Far);
+	}
+	else
+	{
+		double scale = 1.0 - zoomOffset;
+		if (scale < 0.01) scale = 0.01;
+		projection = Mat4::Scale(scale) * projection;
+	}
+}
+
+void Camera::PanCamera(double xOffset, double yOffset)
+{
+	Vec4 eye = camParams.Eye;
+	Vec4 at = camParams.WorldAt;
+
+	eye[0] -= xOffset;
+	eye[1] -= yOffset;
+	eye[3] = 1.0;
+	
+	at[0] -= xOffset;
+	at[1] -= yOffset;
+	at[3] = 1.0;
+
+	LookAt(eye, at, camParams.WorldUp);
 }
 
 void Camera::SetOrthographic(double left, double right, double top, double bottom, double z_near, double z_far)
@@ -182,7 +207,8 @@ void Camera::LookAt(const Vec4 & eye, const Vec4 & at, const Vec4 & up)
 	v[3] = 0;
 	Mat4 c(u, v, n, Vec4(0.0, 0.0, 0.0, 1.0));
 	c.Transpose();
-	cTransform = Mat4::Translate(-eye) * c;
+	//cTransform = Mat4::Translate(-eye) * c;
+	cTransform = c * Mat4::Translate(eye);
 	cTransform[3][3] = 1.0;
 
 	camParams.Eye = eye;
@@ -190,4 +216,6 @@ void Camera::LookAt(const Vec4 & eye, const Vec4 & at, const Vec4 & up)
 	camParams.Front = n;
 	camParams.Side = u;
 	camParams.Up = v;
+	camParams.WorldUp = up;
+	camParams.WorldAt = at;
 }

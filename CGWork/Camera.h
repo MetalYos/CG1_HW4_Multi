@@ -31,6 +31,14 @@ struct CameraParameters
 	Vec4 Front;
 	Vec4 Side;
 	Vec4 Up;
+	Vec4 WorldUp;
+	Vec4 WorldAt;
+
+	double Yaw;
+	double Pitch;
+
+	CameraParameters()
+		: Yaw(-90.0), Pitch(0.0) {}
 };
 
 class Camera
@@ -51,10 +59,10 @@ public:
 	Camera();
 	~Camera();
 
-	//void Translate(Mat4& T);
-	//void Scale(Mat4& S, bool aroundEye = true);
-	//void Rotate(Mat4& R, bool aroundEye = true);
 	Mat4 GetTranform() const;
+	void OrbitCamera(double yawOffset, double pitchOffset);
+	void ZoomCamera(double zoomOffset);
+	void PanCamera(double xOffset, double yOffset);
 
 	void SetOrthographic(double left, double right, double top, double bottom, double z_near, double z_far);
 	void SetOrthographic(double height, double aspectR, double z_near, double z_far);

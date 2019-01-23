@@ -134,6 +134,9 @@ BEGIN_MESSAGE_MAP(CCGWorkView, CView)
 	ON_COMMAND(ID_FOGEFFECT_PORTAL, &CCGWorkView::OnFogeffectPortal)
 	ON_UPDATE_COMMAND_UI(ID_FOGEFFECT_PORTAL, &CCGWorkView::OnUpdateFogeffectPortal)
 	ON_COMMAND(ID_FILE_CLEARALL, &CCGWorkView::OnFileClearall)
+	ON_WM_MBUTTONDOWN()
+	ON_WM_MBUTTONUP()
+	ON_WM_MOUSEWHEEL()
 END_MESSAGE_MAP()
 
 // A patch to fix GLaux disappearance from VS2005 to VS2008
@@ -206,6 +209,9 @@ CCGWorkView::CCGWorkView()
 	rotationOffset = Vec4(0.0);
 	scaleOffset = Vec4(1.0);
 	currentFrame = 0;
+
+	// Camera movement parameters
+	m_IsMouseMiddleDown = false;
 }
 
 CCGWorkView::~CCGWorkView()
@@ -1588,7 +1594,8 @@ void CCGWorkView::OnFileLoad()
 		double zPos = abs(radius / f) * offset;
 		if (zPos > abs(camera->GetCameraParameters().Eye[2]))
 		{
-			Vec4 eye = bboxCenter - Vec4(0.0, 0.0, zPos);
+			//Vec4 eye = bboxCenter - Vec4(0.0, 0.0, zPos);
+			Vec4 eye = Vec4(0.0, 0.0, -zPos);
 			camera->LookAt(eye, bboxCenter, Vec4(0.0, 1.0, 0.0));
 
 			std::stringstream ss;
@@ -1896,6 +1903,9 @@ void CCGWorkView::OnMouseMove(UINT nFlags, CPoint point)
 {
 	double dx = point.x - prevMousePos.x;
 
+	double dxCam = point.x - m_MouseMiddlePrevPos.x;
+	double dyCam = point.y - m_MouseMiddlePrevPos.y;
+
 	if ((nFlags & MK_LBUTTON) == MK_LBUTTON)
 	{
 		Model* model = Scene::GetInstance().GetSelectedModel();
@@ -1970,6 +1980,20 @@ void CCGWorkView::OnMouseMove(UINT nFlags, CPoint point)
 			else
 				model->Scale(Mat4::Scale(x_trans, y_trans, z_trans), (m_nCoordSpace == ID_BUTTON_OBJECT));
 		}
+		Invalidate();
+	}
+	if (m_IsMouseMiddleDown)
+	{
+		//if (GetAsyncKeyState(VK_SHIFT) & 0x00001)
+		if (false)
+		{
+			Scene::GetInstance().GetCamera()->PanCamera(dxCam / m_sensitivity[0], dyCam / m_sensitivity[0]);
+		}
+		else
+		{
+			Scene::GetInstance().GetCamera()->OrbitCamera(dxCam / m_sensitivity[1], dyCam / m_sensitivity[1]);
+		}
+
 		Invalidate();
 	}
 
@@ -2633,4 +2657,32 @@ void CCGWorkView::OnFileClearall()
 {
 	Scene::GetInstance().ClearScene();
 	Invalidate();
+}
+
+
+void CCGWorkView::OnMButtonDown(UINT nFlags, CPoint point)
+{
+	m_IsMouseMiddleDown = true;
+	m_MouseMiddlePrevPos = point;
+
+	CView::OnMButtonDown(nFlags, point);
+}
+
+
+void CCGWorkView::OnMButtonUp(UINT nFlags, CPoint point)
+{
+	m_IsMouseMiddleDown = false;
+
+	CView::OnMButtonUp(nFlags, point);
+}
+
+
+BOOL CCGWorkView::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
+{
+	double zoomOffest = zDelta / m_sensitivity[2];
+
+	Scene::GetInstance().GetCamera()->ZoomCamera(zoomOffest);
+	Invalidate();
+
+	return CView::OnMouseWheel(nFlags, zDelta, pt);
 }
