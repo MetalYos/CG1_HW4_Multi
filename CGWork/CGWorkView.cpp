@@ -1902,6 +1902,7 @@ void CCGWorkView::OnLButtonDown(UINT nFlags, CPoint point)
 void CCGWorkView::OnMouseMove(UINT nFlags, CPoint point)
 {
 	double dx = point.x - prevMousePos.x;
+	double dy = point.y - prevMousePos.y;
 
 	double dxCam = point.x - m_MouseMiddlePrevPos.x;
 	double dyCam = point.y - m_MouseMiddlePrevPos.y;
@@ -1918,6 +1919,13 @@ void CCGWorkView::OnMouseMove(UINT nFlags, CPoint point)
 			trans[0] = m_isAxis_X ? dx / m_sensitivity[0] : 0.0;
 			trans[1] = m_isAxis_Y ? -dx / m_sensitivity[0] : 0.0;
 			trans[2] = m_isAxis_Z ? dx / m_sensitivity[0] : 0.0;
+
+			if (m_isAxis_X && m_isAxis_Y)
+				trans[1] = -dy / m_sensitivity[0];
+			if (m_isAxis_X && m_isAxis_Z)
+				trans[2] = dy / m_sensitivity[0];
+			if (m_isAxis_Y && m_isAxis_Z)
+				trans[2] = dy / m_sensitivity[0];
 
 			trans[0] = (m_nCoordSpace == ID_BUTTON_OBJECT) ? trans[0] : -trans[0];
 			trans[2] = (m_nCoordSpace == ID_BUTTON_OBJECT) ? trans[2] : -trans[2];
@@ -2299,6 +2307,14 @@ void CCGWorkView::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 	{
 		OnAnimationPlay();
 	}
+	if (nChar == 0x4F) // O key
+	{
+		isPlaying = false;
+		for (Model* model : Scene::GetInstance().GetModels())
+		{
+			model->GetAnimation()->ResetAnimation();
+		}
+	}
 	if (nChar == 0x52) // R key
 	{
 		OnAnimationRecord();
@@ -2604,6 +2620,7 @@ void CCGWorkView::OnPlaybackspeedNormal()
 {
 	for (Model* model : Scene::GetInstance().GetModels())
 	{
+		model->GetAnimation()->ResetAnimation();
 		model->GetAnimation()->NormalPlaybackSpeed();
 	}
 }
